@@ -3,13 +3,12 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:adv_call/src/constant/constants.dart';
-import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:headset_connection_event/headset_event.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../utils/shared_pref.dart';
 
 class BackgroundService {
   static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -54,7 +53,7 @@ class BackgroundService {
       androidConfiguration: AndroidConfiguration(
         onStart: onStart,
         autoStart: false,
-        isForegroundMode: true,
+        isForegroundMode: false,
         notificationChannelId: 'my_foreground',
         initialNotificationTitle: 'Background Service',
         initialNotificationContent: 'Initializing',
@@ -93,6 +92,9 @@ class BackgroundService {
       service.stopSelf();
     });
 
+    // Store if the app is just opened
+    SharedPref.write(AppConstant.justOpenedAppKey, true);
+
     Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (service is AndroidServiceInstance && await service.isForegroundService()) {
         _handleForegroundService();
@@ -117,43 +119,46 @@ class BackgroundService {
       ),
     );
 
-    // Handle headset events
-    final headsetPlugin = HeadsetEvent();
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? storedNumber = prefs.getString('phoneNumber');
-    headsetPlugin.setListener((val) async {
-      switch (val) {
-        case HeadsetState.CONNECT:
-          // On Headphone Connect
-          () {};
-          break;
-        case HeadsetState.DISCONNECT:
-          // On Headphone Disconnect
-          AndroidIntent intent = AndroidIntent(
-            action: 'android.intent.action.CALL',
-            data: 'tel:${storedNumber ?? "9863021878"}',
-          );
-          await intent.launch();
-          break;
-        case HeadsetState.NEXT:
-          // On Headphone Next Button
-          AndroidIntent intent = AndroidIntent(
-            action: 'android.intent.action.CALL',
-            data: 'tel:${storedNumber ?? "9863021878"}',
-          );
-          await intent.launch();
-          break;
-        case HeadsetState.PREV:
-          // On Headphone Previous Button
-          AndroidIntent intent = AndroidIntent(
-            action: 'android.intent.action.CALL',
-            data: 'tel:${storedNumber ?? "9863021878"}',
-          );
-          await intent.launch();
-          break;
-        default:
-      }
-    });
+    // // Handle headset events
+    // final headsetPlugin = HeadsetEvent();
+    // await SharedPref.read(AppConstant.storedPhoneKey, defaultValue: "");
+    // final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final String? storedNumber = prefs.getString(AppConstant.storedPhoneKey);
+    // if(await SharedPref.read(AppConstant.storedPhoneKey, defaultValue: "") == false){
+    //   headsetPlugin.setListener((val) async {
+    //     switch (val) {
+    //       case HeadsetState.CONNECT:
+    //         // On Headphone Connect
+    //         () {};
+    //         break;
+    //       case HeadsetState.DISCONNECT:
+    //         // On Headphone Disconnect
+    //         AndroidIntent intent = AndroidIntent(
+    //           action: 'android.intent.action.CALL',
+    //           data: 'tel:${storedNumber ?? "9863021878"}',
+    //         );
+    //         await intent.launch();
+    //         break;
+    //       case HeadsetState.NEXT:
+    //         // On Headphone Next Button
+    //         AndroidIntent intent = AndroidIntent(
+    //           action: 'android.intent.action.CALL',
+    //           data: 'tel:${storedNumber ?? "9863021878"}',
+    //         );
+    //         await intent.launch();
+    //         break;
+    //       case HeadsetState.PREV:
+    //         // On Headphone Previous Button
+    //         AndroidIntent intent = AndroidIntent(
+    //           action: 'android.intent.action.CALL',
+    //           data: 'tel:${storedNumber ?? "9863021878"}',
+    //         );
+    //         await intent.launch();
+    //         break;
+    //       default:
+    //     }
+    //   });
+    // }
 
     // Debugging log
     debugPrint('FLUTTER BACKGROUND SERVICE: ${DateTime.now()}');

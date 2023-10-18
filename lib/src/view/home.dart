@@ -26,29 +26,31 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
-    checkHeadsetConnectionStatus();
     initialize();
     super.initState(); 
   }
   
-  initialize()async{
+  initialize() async{
     checkForStoredNumber();
+    checkHeadsetConnectionStatus();
   }
 
   // Check for Headphone Status
-  checkHeadsetConnectionStatus() async{
+  Future checkHeadsetConnectionStatus() async{
     headsetPlugin.requestPermission();
     var currentStatus = await headsetPlugin.getCurrentState;
     setState(() {
-        _headsetState = currentStatus;
-      });
-    headsetPlugin.setListener((val) {
-      setState(() {
-          _headsetState = val;
-          if(_headsetState == HeadsetState.DISCONNECT){
-            callNumber();
-          }
-      });
+      _headsetState = currentStatus;
+    });
+    headsetPlugin.setListener((val) async{
+      _headsetState = val;
+      if(await SharedPref.read(AppConstant.justOpenedAppKey, defaultValue: "") == false){
+        if(_headsetState == HeadsetState.DISCONNECT){
+          callNumber();
+        }
+      }
+      await SharedPref.write(AppConstant.justOpenedAppKey, false);
+      setState(() {});
     });
   }
 
@@ -174,7 +176,7 @@ class _HomePageState extends State<HomePage> {
       popStatus = false;
       // ignore: use_build_context_synchronously
       return showDialog(
-        context: context, 
+        context: context,
         builder: (context){
           return WillPopScope(
             onWillPop: ()async => popStatus,
@@ -260,6 +262,7 @@ class _HomePageState extends State<HomePage> {
       );
     } else{
       popStatus = true;
+      // ignore: use_build_context_synchronously
       return showDialog(
         context: context, 
         builder: (context){

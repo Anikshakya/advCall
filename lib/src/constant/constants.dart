@@ -5,4 +5,5 @@ class AppConstant {
   static final service = FlutterBackgroundService();
   
   static String storedPhoneKey = "phoneNumber";
+  static String justOpenedAppKey = "firstOpen";
 }

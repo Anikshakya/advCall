@@ -178,7 +178,8 @@ class NotificationService {
     // scheduledNotificationDateTime as tz.TZDateTime,
     tz.TZDateTime.from(scheduledNotificationDateTime, tz.local),
     notificationDetails(),
-    androidAllowWhileIdle: true,
+    androidScheduleMode: AndroidScheduleMode.exact,
+    // androidAllowWhileIdle: true,
     uiLocalNotificationDateInterpretation:UILocalNotificationDateInterpretation.absoluteTime);
   }
 
