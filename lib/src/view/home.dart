@@ -26,7 +26,7 @@ class _HomePageState extends State<HomePage> {
   String deviceName='';
 
   //Socket client
-  final serverUrl = 'http://192.168.1.106:3001';
+  final serverUrl = 'http://192.168.1.8:3001';
   late Socket socket; // Define a Socket instance
 
   //Headset
