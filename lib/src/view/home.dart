@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'package:android_intent_plus/android_intent.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:headset_connection_event/headset_event.dart';
-
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:socket_io_client/socket_io_client.dart';
+import 'package:http/http.dart' as http;
 import '../constant/constants.dart';
 import '../utils/shared_pref.dart';
 
@@ -16,6 +19,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  //Device Info
+  final deviceInfoPlugin = DeviceInfoPlugin();
+  dynamic allDeviceInfo;
+  String deviceId='';
+  String deviceName='';
+
+  //Socket client
+  final serverUrl = 'http://192.168.1.106:3001';
+  late Socket socket; // Define a Socket instance
+
+  //Headset
   final headsetPlugin = HeadsetEvent();
   final numberCon = TextEditingController();
   late String savedNum;
@@ -26,13 +40,71 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
+    getDeviceInfo();//device info
+    initilizeSocketClient();//Socket Setup
     initialize();
     super.initState(); 
   }
-  
+
   initialize() async{
     checkForStoredNumber();
     checkHeadsetConnectionStatus();
+  }
+
+  //device info
+  getDeviceInfo()async{
+    final deviceInfo = await deviceInfoPlugin.deviceInfo;
+    allDeviceInfo = deviceInfo.data;
+    deviceId = allDeviceInfo["id"];
+    deviceName = allDeviceInfo["device"];
+    if(kDebugMode){
+      print('device Id ====== $allDeviceInfo');
+      print ('device Id ====== $deviceId');
+    }
+  }
+
+  //Socket Setup
+  initilizeSocketClient(){
+    // Connect to the Socket.io server
+    socket = io(serverUrl, <String, dynamic>{
+      'transports': ['websocket'],
+      'autoConnect': false,
+    });
+    socket.on('connect', (_) {
+      if (kDebugMode) {
+        print('Connected to the server');
+      }
+      // You can emit events here or handle other actions upon connection.
+    });
+    socket.connect();
+  }
+
+  //Send Data to Node Server from flutter socket client
+  void _sendHttpRequestToServer(deviceStatus) async {
+    // Create a JSON object with the message and device name
+    final jsonData = {
+      "deviceStatus": deviceStatus,
+      "deviceName": deviceName,
+      "deviceId": deviceId,
+      "Datetime": DateTime.now(),
+    };
+    if (kDebugMode) {
+      print(deviceStatus);
+    }
+    final url = Uri.parse('$serverUrl/api/v1/forecast?count=$jsonData');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      if (kDebugMode) {
+        print('HTTP Request Success');
+        print('Response data: ${response.body}');
+      }
+      // Handle the response as needed
+    } else {
+      if (kDebugMode) {
+        print('HTTP Request Failed');
+      }
+    }
   }
 
   // Check for Headphone Status
@@ -42,6 +114,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _headsetState = currentStatus;
     });
+    _sendHttpRequestToServer(currentStatus); 
     headsetPlugin.setListener((val) async{
       _headsetState = val;
       if(await SharedPref.read(AppConstant.justOpenedAppKey, defaultValue: "") == false){
@@ -49,6 +122,7 @@ class _HomePageState extends State<HomePage> {
           callNumber();
         }
       }
+      _sendHttpRequestToServer(val);  
       await SharedPref.write(AppConstant.justOpenedAppKey, false);
       setState(() {});
     });
