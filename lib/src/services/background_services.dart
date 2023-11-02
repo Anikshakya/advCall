@@ -91,7 +91,7 @@ class BackgroundService {
     service.on('stopService').listen((event) {
       service.stopSelf();
     });
-
+    await SharedPref.init();
     // Store if the app is just opened
     SharedPref.write(AppConstant.justOpenedAppKey, true);
 
