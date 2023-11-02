@@ -4,7 +4,6 @@ import 'dart:ui';
 
 import 'package:adv_call/src/constant/constants.dart';
 import 'package:android_intent_plus/android_intent.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
@@ -211,24 +210,11 @@ void onStart(ServiceInstance service) async {
     /// you can see this log in logcat
     debugPrint('FLUTTER BACKGROUND SERVICE: ${DateTime.now()}');
 
-    // test using external plugin
-    final deviceInfo = DeviceInfoPlugin();
-    String? device;
-    if (Platform.isAndroid) {
-      final androidInfo = await deviceInfo.androidInfo;
-      device = androidInfo.model;
-    }
-
-    if (Platform.isIOS) {
-      final iosInfo = await deviceInfo.iosInfo;
-      device = iosInfo.model;
-    }
-
     service.invoke(
       'update',
       {
         "current_date": DateTime.now().toIso8601String(),
-        "device": device,
+        "device": Platform.isAndroid ? "Android" : "IOS",
       },
     );
   });
