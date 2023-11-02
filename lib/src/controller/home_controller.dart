@@ -8,6 +8,7 @@ import 'package:socket_io_client/socket_io_client.dart';
 import 'package:http/http.dart' as http;
 import '../constant/constants.dart';
 import '../utils/shared_pref.dart';
+import '../view/home.dart';
 
 class HomeController extends GetxController{
   TextEditingController serverUrlCon = TextEditingController();
@@ -18,10 +19,12 @@ class HomeController extends GetxController{
   RxString imeiNo         =''.obs;
   RxString modelName      =''.obs;
   RxString manufacturer   =''.obs;
-  RxString apiLevel       =''.obs;
   RxString productName    =''.obs;
   RxString cpuType        =''.obs;
   RxString hardware       =''.obs;
+
+  //wifi name
+  RxString wifiname       =''.obs;
 
   //Socket client
   late Socket socket; // Define a Socket instance
@@ -36,7 +39,6 @@ class HomeController extends GetxController{
       imeiNo.value          = await DeviceInformation.deviceIMEINumber;
       modelName.value       = await DeviceInformation.deviceModel;
       manufacturer.value    = await DeviceInformation.deviceManufacturer;
-      apiLevel.value        = await DeviceInformation.apiLevel;
       productName.value     = await DeviceInformation.productName;
       cpuType.value         = await DeviceInformation.cpuName;
       hardware.value        = await DeviceInformation.hardware;
@@ -46,8 +48,10 @@ class HomeController extends GetxController{
   }
 
   //Connect To Socket Server
-  connectToSocketServer(context){
-    final serverUrl = serverUrlCon.text.trim();
+  connectToSocketServer(context, {bool isWifi = false}) async {
+   
+    const serverUrl = "http://192.168.1.106:3001";  
+    // getStoredSocketUrl();
     storeSocketUrl(serverUrl);
     // Connect to the Socket.io server
     socket = io(serverUrl, <String, dynamic>{
@@ -61,6 +65,10 @@ class HomeController extends GetxController{
       // You can emit events here or handle other actions upon connection.
       isSocketServerConnected.value = true;
       showSnackbar(context,'Connected to server');
+      if (isWifi) {
+        sendWifiLogToServer(wifiname.value);
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const HomePage(),));
+      }
     });
     socket.on('connect_error', (data) {
       if (kDebugMode) {
@@ -105,10 +113,12 @@ class HomeController extends GetxController{
     final String? storedSocketUrl = await SharedPref.read(AppConstant.socketServerUrlKey, defaultValue: "");
     if(storedSocketUrl==null||storedSocketUrl==""){
       serverUrlCon.text='http://192.168.1.106:3001';
+      return serverUrlCon.text;
     }
     else{
       serverUrlCon.text = storedSocketUrl;
-    }
+      return serverUrlCon.text;
+    }   
   }
 
   //Send Data to Node Server from flutter socket client
@@ -122,10 +132,43 @@ class HomeController extends GetxController{
         "imeiNo"      : imeiNo,
         "modelName"   : modelName,
         "manufacturer": manufacturer,
+        "wifi name" : wifiname.value,
         "Datetime"    : DateTime.now(),
       };
       if (kDebugMode) {
         print(deviceStatus);
+      }
+      final url = Uri.parse('$serverUrl/api/v1/forecast?count=$jsonData');
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        if (kDebugMode) {
+          print('HTTP Request Success');
+          print('Response data: ${response.body}');
+        }
+        // Handle the response as needed
+      } else {
+        if (kDebugMode) {
+          print('HTTP Request Failed');
+        }
+      }
+    }
+  }
+
+
+  void sendWifiLogToServer(wifi) async {
+    if(isSocketServerConnected.value){
+      String serverUrl = serverUrlCon.text.trim();
+      // Create a JSON object with the message and device name
+      final jsonData = {
+        "Wifi Connected To" : wifi,
+        "deviceName"  : deviceName,
+        "imeiNo"      : imeiNo,
+        "modelName"   : modelName,
+        "manufacturer": manufacturer,
+        "Datetime"    : DateTime.now(),
+      };
+      if (kDebugMode) {
+        print(wifi);
       }
       final url = Uri.parse('$serverUrl/api/v1/forecast?count=$jsonData');
       final response = await http.get(url);

@@ -48,6 +48,8 @@ dependencies:
   device_information: ^0.0.4
   socket_io_client: ^2.0.3+1
   http: ^1.1.0
+  wifi_iot: any
+  android_flutter_wifi: any
 
 dev_dependencies:
   flutter_test:

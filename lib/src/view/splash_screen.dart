@@ -1,4 +1,4 @@
-import 'package:adv_call/src/view/home.dart';
+import 'package:adv_call/src/view/wifi_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -20,7 +20,9 @@ class _SlpashScreenState extends State<SlpashScreen> {
     // Navigate to the login screen after 3 seconds
     Future.delayed(const Duration(seconds: 3), () async{
       await SharedPref.write(AppConstant.justOpenedAppKey, true);
-      Get.offAll(()=> const HomePage());
+      Get.offAll(()=> const WifiScreen()
+      // const HomePage()
+      );
     });
   }
 
