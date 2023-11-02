@@ -5,11 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:headset_connection_event/headset_event.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:socket_io_client/socket_io_client.dart';
+import 'package:device_information/device_information.dart';
 import 'package:http/http.dart' as http;
 import '../constant/constants.dart';
 import '../utils/shared_pref.dart';
+import '../widgets/snackbar_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -19,15 +20,22 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  TextEditingController serverUrlCon = TextEditingController();
   //Device Info
-  final deviceInfoPlugin = DeviceInfoPlugin();
-  dynamic allDeviceInfo;
-  String deviceId='';
+  dynamic deviceId='';
   String deviceName='';
+  String platformVersion='';
+  String imeiNo='';
+  String modelName ='';
+  String manufacturer ='';
+  String apiLevel ='';
+  String productName ='';
+  String cpuType ='';
+  String hardware ='';
 
   //Socket client
-  final serverUrl = 'http://192.168.1.8:3001';
   late Socket socket; // Define a Socket instance
+  bool isSocketServerConnected = false;
 
   //Headset
   final headsetPlugin = HeadsetEvent();
@@ -41,7 +49,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     getDeviceInfo();//device info
-    initilizeSocketClient();//Socket Setup
+    getStoredSocketUrl();
     initialize();
     super.initState(); 
   }
@@ -53,18 +61,25 @@ class _HomePageState extends State<HomePage> {
 
   //device info
   getDeviceInfo()async{
-    final deviceInfo = await deviceInfoPlugin.deviceInfo;
-    allDeviceInfo = deviceInfo.data;
-    deviceId = allDeviceInfo["id"];
-    deviceName = allDeviceInfo["device"];
-    if(kDebugMode){
-      print('device Id ====== $allDeviceInfo');
-      print ('device Id ====== $deviceId');
+    try {
+      platformVersion = await DeviceInformation.platformVersion;
+      deviceName      = await DeviceInformation.deviceName;
+      imeiNo          = await DeviceInformation.deviceIMEINumber;
+      modelName       = await DeviceInformation.deviceModel;
+      manufacturer    = await DeviceInformation.deviceManufacturer;
+      apiLevel        = await DeviceInformation.apiLevel;
+      productName     = await DeviceInformation.productName;
+      cpuType         = await DeviceInformation.cpuName;
+      hardware        = await DeviceInformation.hardware;
+    } on PlatformException {
+      platformVersion = 'Failed to get platform version.';
     }
   }
 
-  //Socket Setup
-  initilizeSocketClient(){
+  //Connect To Socket Server
+  connectToSocketServer(){
+    final serverUrl = serverUrlCon.text.trim();
+    storeSocketUrl(serverUrl);
     // Connect to the Socket.io server
     socket = io(serverUrl, <String, dynamic>{
       'transports': ['websocket'],
@@ -75,25 +90,56 @@ class _HomePageState extends State<HomePage> {
         print('Connected to the server');
       }
       // You can emit events here or handle other actions upon connection.
+      setState(() {
+        isSocketServerConnected = true;
+      });
+      showSnackbar(context,'Connected to server');
+    });
+    socket.on('connect_error', (data) {
+      if (kDebugMode) {
+        print('Connection error: $data');
+      }
+      // Handle the connection error here.
+      setState(() {
+        isSocketServerConnected = false;
+      });
+      showSnackbar(context, 'Connection error: $data');
+      socket.close();
     });
     socket.connect();
   }
 
+  //Disconnect From Socket Server
+  disconnectFromSocketServer(){
+    socket.on('disconnect',(_){
+      if (kDebugMode) {
+        print('Disconnected from the server');
+      }
+      setState(() {
+        isSocketServerConnected = false;
+      });
+      showSnackbar(context,'Disconnected from server');
+    });
+    socket.close();
+  }
+
   //Send Data to Node Server from flutter socket client
   void _sendHttpRequestToServer(deviceStatus) async {
+    String serverUrl = serverUrlCon.text.trim();
     // Create a JSON object with the message and device name
     final jsonData = {
       "deviceStatus": deviceStatus,
-      "deviceName": deviceName,
-      "deviceId": deviceId,
-      "Datetime": DateTime.now(),
+      "deviceName"  : deviceName,
+      "imeiNo"      : imeiNo,
+      "modelName"   : modelName,
+      "manufacturer": manufacturer,
+      "Datetime"    : DateTime.now(),
     };
     if (kDebugMode) {
       print(deviceStatus);
     }
     final url = Uri.parse('$serverUrl/api/v1/forecast?count=$jsonData');
     final response = await http.get(url);
-
     if (response.statusCode == 200) {
       if (kDebugMode) {
         print('HTTP Request Success');
@@ -114,7 +160,6 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _headsetState = currentStatus;
     });
-    _sendHttpRequestToServer(currentStatus); 
     headsetPlugin.setListener((val) async{
       _headsetState = val;
       if(await SharedPref.read(AppConstant.justOpenedAppKey, defaultValue: "") == false){
@@ -149,77 +194,169 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Center(
-          child: Column(
-            children: [
-              const SizedBox(height: 200,),
-              //Headset Status
-              Icon(
-                Icons.headset,
-                size: 35,
-                color: _headsetState == HeadsetState.CONNECT
-                    ? Colors.teal
-                    : Colors.redAccent,
-              ),
-              const SizedBox(height: 10,),
-              Text('State : ${_headsetState ?? "Not Connected"}\n', style: const TextStyle(fontSize: 16),),
-              const SizedBox(height: 35,),
-              ElevatedButton(
-                child: const Text("Foreground Mode"),
-                onPressed: () {
-                  FlutterBackgroundService().invoke("setAsForeground");
-                },
-              ),
-              const SizedBox(height: 20,),
-              ElevatedButton(
-                child: const Text("Background Mode"),
-                onPressed: () {
-                  FlutterBackgroundService().invoke("setAsBackground");
-                },
-              ),
-              const SizedBox(height: 20,),
-              //Stop App
-              ElevatedButton(
-                child: Text(text),
-                onPressed: () async {
-                  var isRunning = await AppConstant.service.isRunning();
-                  if (isRunning) {
-                    AppConstant.service.invoke("stopService");
-                  } else {
-                    AppConstant.service.startService();
-                  }
-      
-                  if (!isRunning) {
-                    text = 'Stop Service';
-                  } else {
-                    text = 'Start Service';
-                  }
-                  setState(() {});
-                },
-              ),
-              const SizedBox(height: 20,),
-              // Change Number
-              ElevatedButton(
-                child: const Text("Change Number"),
-                onPressed: (){
-                  showPopUp();
-                },
-              ),
-              const SizedBox(height: 20,),
-              //Test Call
-              ElevatedButton(
-                child: const Text("Test Stored Number"),
-                onPressed: (){
-                  callNumber();
-                },
-              ),
-            ],
+    return GestureDetector(
+      onTap: (){
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                const SizedBox(height: kTextTabBarHeight),
+                //Headset Status
+                Icon(
+                  Icons.headset,
+                  size: 35,
+                  color: _headsetState == HeadsetState.CONNECT
+                  ? Colors.teal
+                  : Colors.redAccent,
+                ),
+                const SizedBox(height: 10),
+                Text('State : ${_headsetState ?? "Not Connected"}\n', style: const TextStyle(fontSize: 16)),
+                const SizedBox(height: 35),
+                //Server Url TextField
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal:20.0),
+                  child: TextField(
+                    style: Theme.of(context).textTheme.bodyLarge,
+                    controller: serverUrlCon,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.blue, width: 2.0),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      filled: true,
+                      enabled: isSocketServerConnected?false:true,
+                      fillColor: Theme.of(context).colorScheme.background,
+                      hintText: 'Enter Socket Server Url',
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: (){
+                          if(!isSocketServerConnected){
+                            serverUrlCon.clear();
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                //Connect To Server
+                OutlinedButton(
+                  onPressed:(){
+                    if(serverUrlCon.text.trim()==""){
+                      showSnackbar(context,'Enter Server URL to connect to.');
+                    }
+                    else if(isSocketServerConnected){
+                      disconnectFromSocketServer();
+                    }
+                    else{
+                      connectToSocketServer();
+                    }
+                  }, 
+                  style: ButtonStyle(
+                    padding: MaterialStateProperty.all(const EdgeInsets.all(16.0)), // Adjust padding for height
+                    backgroundColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
+                      if (states.contains(MaterialState.pressed)) {
+                        return isSocketServerConnected?Colors.lightGreen:Colors.lightBlue; // Color when pressed
+                      }
+                      return isSocketServerConnected?Colors.green:Colors.blue; // Default color
+                    }),
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0), // Adjust border radius
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    isSocketServerConnected?'Connected':'Connect To Server',
+                    style: const TextStyle(
+                      color: Colors.white, // Text color
+                    ),
+                  )
+                ),
+                const SizedBox(height: 20),
+                //ForeGround Mode
+                ElevatedButton(
+                  child: const Text("Foreground Mode"),
+                  onPressed: () {
+                    FlutterBackgroundService().invoke("setAsForeground");
+                  },
+                ),
+                const SizedBox(height: 20),
+                //Background Mode
+                ElevatedButton(
+                  child: const Text("Background Mode"),
+                  onPressed: () {
+                    FlutterBackgroundService().invoke("setAsBackground");
+                  },
+                ),
+                const SizedBox(height: 20),
+                //Stop App
+                ElevatedButton(
+                  child: Text(text),
+                  onPressed: () async {
+                    var isRunning = await AppConstant.service.isRunning();
+                    if (isRunning) {
+                      AppConstant.service.invoke("stopService");
+                    } else {
+                      AppConstant.service.startService();
+                    }
+          
+                    if (!isRunning) {
+                      text = 'Stop Service';
+                    } else {
+                      text = 'Start Service';
+                    }
+                    setState(() {});
+                  },
+                ),
+                const SizedBox(height: 20),
+                //Change Number
+                ElevatedButton(
+                  child: const Text("Change Number"),
+                  onPressed: (){
+                    showPopUp();
+                  },
+                ),
+                const SizedBox(height: 20),
+                //Test Call
+                ElevatedButton(
+                  child: const Text("Test Stored Number"),
+                  onPressed: (){
+                    callNumber();
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  // Store SocketServerUrl
+  Future<void> storeSocketUrl(String url) async {
+    await SharedPref.write(AppConstant.socketServerUrlKey, url);
+  }
+
+  // Get Stored Socket Url
+  getStoredSocketUrl() async {
+    final String? storedSocketUrl = await SharedPref.read(AppConstant.socketServerUrlKey, defaultValue: "");
+    if(storedSocketUrl==null||storedSocketUrl==""){
+      serverUrlCon.text='http://192.168.1.106:3001';
+    }
+    else{
+      serverUrlCon.text = storedSocketUrl;
+    }
   }
 
   // Store number

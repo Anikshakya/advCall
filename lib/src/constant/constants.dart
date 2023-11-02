@@ -6,4 +6,5 @@ class AppConstant {
   
   static String storedPhoneKey = "phoneNumber";
   static String justOpenedAppKey = "firstOpen";
+  static String socketServerUrlKey = "socketServerUrl";
 }
