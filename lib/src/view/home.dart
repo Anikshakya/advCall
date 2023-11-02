@@ -36,6 +36,7 @@ class _HomePageState extends State<HomePage> {
   //Socket client
   late Socket socket; // Define a Socket instance
   bool isSocketServerConnected = false;
+  String receivedDataFromServer = '';
 
   //Headset
   final headsetPlugin = HeadsetEvent();
@@ -106,6 +107,16 @@ class _HomePageState extends State<HomePage> {
       showSnackbar(context, 'Connection error: $data');
       socket.close();
     });
+    // Handle incoming data
+    socket.on('serverEvent', (data) {
+      // Process the data as needed
+      if (kDebugMode) {
+        print("Received: $data");
+      }
+      setState(() {
+        receivedDataFromServer = data.toString();
+      });
+    });
     socket.connect();
   }
 
@@ -117,6 +128,7 @@ class _HomePageState extends State<HomePage> {
       }
       setState(() {
         isSocketServerConnected = false;
+        receivedDataFromServer = '';
       });
       showSnackbar(context,'Disconnected from server');
     });
@@ -190,6 +202,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    socket.disconnect();
     numberCon.dispose();
     super.dispose();
   }
@@ -250,7 +263,10 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal:20.0,vertical: isSocketServerConnected?10.0:0.0),
+                  child: Text(receivedDataFromServer,textAlign: TextAlign.center),
+                ),
                 //Connect To Server
                 OutlinedButton(
                   onPressed:(){
