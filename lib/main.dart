@@ -1,4 +1,5 @@
 import 'package:adv_call/src/services/background_services.dart';
+import 'package:adv_call/src/services/notification_service.dart';
 import 'package:adv_call/src/services/permission_services.dart';
 import 'package:adv_call/src/view/splash_screen.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +10,9 @@ import 'src/utils/shared_pref.dart';
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await SharedPref.init();
-  await BackgroundService.initializeService();
+  await initializeService();
   await PermissionManager.initializePermission();
+  await NotificationService.initNotification();
   runApp(const MyApp());
 }
 

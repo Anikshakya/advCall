@@ -3,174 +3,233 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:adv_call/src/constant/constants.dart';
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:headset_connection_event/headset_event.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../utils/shared_pref.dart';
+Future<void> initializeService() async {
+  /// OPTIONAL, using custom notification channel id
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    'my_foreground', // id
+    'MY FOREGROUND SERVICE', // title
+    description: 'This channel is used for important notifications.', // description
+    importance: Importance.low, // importance must be at low or higher level
+  );
 
-class BackgroundService {
-  static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
-  static Future<void> initializeService() async {
-    if (Platform.isIOS) {
-      await _initializeIOSNotifications();
-    }
-
-    await _createNotificationChannel();
-    await _configureBackgroundService();
-
-    AppConstant.service.startService();
-  }
-
-  static Future<void> _initializeIOSNotifications() async {
-    await flutterLocalNotificationsPlugin.initialize(const InitializationSettings(
-      android: AndroidInitializationSettings('ic_launcher'),
+  if (Platform.isIOS) {
+    await flutterLocalNotificationsPlugin.initialize(InitializationSettings(
+      android: const AndroidInitializationSettings('ic_launcher'), 
       iOS: DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
         requestSoundPermission: true,
+        onDidReceiveLocalNotification:(int id, String? title, String? body, String? payload) async {}
+        )
       ),
-    ));
+      onDidReceiveNotificationResponse:(NotificationResponse notificationResponse) async {});
   }
 
-  static Future<void> _createNotificationChannel() async {
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'my_foreground',
-      'MY FOREGROUND SERVICE',
-      description: 'This channel is used for important notifications.',
-      importance: Importance.low,
-    );
+  await flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(channel);
 
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
+  //To Configure Bg Service(Required)
+  await AppConstant.service.configure(
+    //For Android
+    androidConfiguration: AndroidConfiguration(
+      // this will be executed when app is in foreground or background in separated isolate
+      onStart: onStart,
+
+      // auto start service
+      autoStart: false,
+      isForegroundMode: true,
+      notificationChannelId: 'my_foreground',
+      initialNotificationTitle: 'Background Service',
+      initialNotificationContent: 'Initializing',
+      foregroundServiceNotificationId: 888,
+    ),
+
+    //For IOS
+    iosConfiguration: IosConfiguration(
+      // auto start service
+      autoStart: false,
+
+      // this will be executed when app is in foreground in separated isolate
+      onForeground: onStart,
+
+      // you have to enable background fetch capability on xcode project
+      onBackground: onIosBackground,
+    ),
+  );
+
+  // service.startService();
+}
+
+// to ensure this is executed
+// run app from xcode, then from xcode menu, select Simulate Background Fetch
+
+@pragma('vm:entry-point')
+Future<bool> onIosBackground(ServiceInstance service) async {
+  WidgetsFlutterBinding.ensureInitialized();
+  DartPluginRegistrant.ensureInitialized();
+
+  // SharedPreferences preferences = await SharedPreferences.getInstance();
+  // await preferences.reload();
+  // final log = preferences.getStringList('log') ?? <String>[];
+  // log.add(DateTime.now().toIso8601String());
+  // await preferences.setStringList('log', log);
+
+  return true;
+}
+
+@pragma('vm:entry-point')
+void onStart(ServiceInstance service) async {
+  // Only available for flutter 3.0.0 and later
+  DartPluginRegistrant.ensureInitialized();
+
+  /// OPTIONAL when use custom notification
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+  if (service is AndroidServiceInstance) {
+    service.on('setAsForeground').listen((event) {
+      service.setAsForegroundService();
+    });
+
+    service.on('setAsBackground').listen((event) {
+      service.setAsBackgroundService();
+    });
   }
 
-  static Future<void> _configureBackgroundService() async {
-    await AppConstant.service.configure(
-      androidConfiguration: AndroidConfiguration(
-        onStart: onStart,
-        autoStart: false,
-        isForegroundMode: false,
-        notificationChannelId: 'my_foreground',
-        initialNotificationTitle: 'Background Service',
-        initialNotificationContent: 'Initializing',
-        foregroundServiceNotificationId: 888,
-      ),
-      iosConfiguration: IosConfiguration(
-        autoStart: false,
-        onForeground: onStart,
-        onBackground: onIosBackground,
-      ),
-    );
-  }
+  service.on('stopService').listen((event) {
+    service.stopSelf();
+  });
 
-  @pragma('vm:entry-point')
-  static Future<bool> onIosBackground(ServiceInstance service) async {
-    WidgetsFlutterBinding.ensureInitialized();
-    DartPluginRegistrant.ensureInitialized();
-    return true;
-  }
-
-  @pragma('vm:entry-point')
-  static void onStart(ServiceInstance service) async {
-    DartPluginRegistrant.ensureInitialized();
-
+  //Your Bg Task will be excuted here
+  Timer.periodic(const Duration(seconds: 1), (timer) async {
     if (service is AndroidServiceInstance) {
-      service.on('setAsForeground').listen((event) {
-        service.setAsForegroundService();
-      });
+      if (await service.isForegroundService()) {
+        /// OPTIONAL for use custom notification
+        /// the notification id must be equals with AndroidConfiguration when you call configure() method.
+        flutterLocalNotificationsPlugin.show(
+          888,
+          'Backgorund Service',
+          'DateTime: ${DateTime.now()}',
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'my_foreground',
+              'MY FOREGROUND SERVICE',
+              icon: 'ic_launcher',
+              ongoing: true,
+            ),
+          ),
+        );
+        
+        // Handle headset events
+        final headsetPlugin = HeadsetEvent();
+        final SharedPreferences prefs = await SharedPreferences.getInstance();
+        final String? storedNumber = prefs.getString(AppConstant.storedPhoneKey);
+        headsetPlugin.setListener((val) async{
+            debugPrint("Running");
+            switch (val) {
+              //On Headphone Connect
+              case HeadsetState.CONNECT:
+              (){};
+              break;
 
-      service.on('setAsBackground').listen((event) {
-        service.setAsBackgroundService();
-      });
+              //On Headphone Disconnect
+              case HeadsetState.DISCONNECT:
+              AndroidIntent intent = AndroidIntent(
+                action: 'android.intent.action.CALL',
+                data: 'tel:${storedNumber ?? "9863021878"}',
+              );
+              await intent.launch();
+              break;
+
+              //On Headphone Next Button
+              case HeadsetState.NEXT:
+              AndroidIntent intent = AndroidIntent(
+                action: 'android.intent.action.CALL',
+                data: 'tel:${storedNumber ?? "9863021878"}',
+              );
+              await intent.launch();
+              break;
+
+              //On Headphone Previous Button
+              case HeadsetState.PREV:
+              AndroidIntent intent = AndroidIntent(
+                action: 'android.intent.action.CALL',
+                data: 'tel:${storedNumber ?? "9863021878"}',
+              );
+              await intent.launch();
+              break;
+
+              default:
+            }
+          }
+        );
+
+        //Show notification
+        // if(read("scheduledTime") != null && read("scheduledTime") != ""){
+        //   tz.initializeTimeZones();
+        //   NotificationService().scheduleNotification(
+        //     title: 'Scheduled Notification',
+        //     body: '${read("scheduledTime")}',
+        //     scheduledNotificationDateTime: DateTime.parse(read("scheduledTime")),
+        //   );
+        //   // .whenComplete(() {
+        //   //   write("scheduledTime", "");
+        //   //   // service.stopSelf();
+        //   // });
+        // }
+
+        // if you don't using custom notification, uncomment this
+        // service.setForegroundNotificationInfo(
+        //   title: "My App Service",
+        //   content: "Updated at ${DateTime.now()}",
+        // );
+      }
+
+      flutterLocalNotificationsPlugin.show(
+          888,
+          'Backgorund Service',
+          'DateTime: ${DateTime.now()}',
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'my_foreground',
+              'MY FOREGROUND SERVICE',
+              icon: 'ic_launcher',
+              ongoing: true,
+            ),
+          ),
+        );
     }
 
-    service.on('stopService').listen((event) {
-      service.stopSelf();
-    });
-    await SharedPref.init();
-    // Store if the app is just opened
-    SharedPref.write(AppConstant.justOpenedAppKey, true);
-
-    Timer.periodic(const Duration(seconds: 1), (timer) async {
-      if (service is AndroidServiceInstance && await service.isForegroundService()) {
-        _handleForegroundService();
-      }
-    });
-  }
-
-  static void _handleForegroundService() async {
-    // Your background task will be executed here
-    // Show a custom notification
-    flutterLocalNotificationsPlugin.show(
-      888,
-      'Background Service',
-      'DateTime: ${DateTime.now()}',
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'my_foreground',
-          'MY FOREGROUND SERVICE',
-          icon: 'ic_launcher',
-          ongoing: true,
-        ),
-      ),
-    );
-
-    // // Handle headset events
-    // final headsetPlugin = HeadsetEvent();
-    // await SharedPref.read(AppConstant.storedPhoneKey, defaultValue: "");
-    // final SharedPreferences prefs = await SharedPreferences.getInstance();
-    // final String? storedNumber = prefs.getString(AppConstant.storedPhoneKey);
-    // if(await SharedPref.read(AppConstant.storedPhoneKey, defaultValue: "") == false){
-    //   headsetPlugin.setListener((val) async {
-    //     switch (val) {
-    //       case HeadsetState.CONNECT:
-    //         // On Headphone Connect
-    //         () {};
-    //         break;
-    //       case HeadsetState.DISCONNECT:
-    //         // On Headphone Disconnect
-    //         AndroidIntent intent = AndroidIntent(
-    //           action: 'android.intent.action.CALL',
-    //           data: 'tel:${storedNumber ?? "9863021878"}',
-    //         );
-    //         await intent.launch();
-    //         break;
-    //       case HeadsetState.NEXT:
-    //         // On Headphone Next Button
-    //         AndroidIntent intent = AndroidIntent(
-    //           action: 'android.intent.action.CALL',
-    //           data: 'tel:${storedNumber ?? "9863021878"}',
-    //         );
-    //         await intent.launch();
-    //         break;
-    //       case HeadsetState.PREV:
-    //         // On Headphone Previous Button
-    //         AndroidIntent intent = AndroidIntent(
-    //           action: 'android.intent.action.CALL',
-    //           data: 'tel:${storedNumber ?? "9863021878"}',
-    //         );
-    //         await intent.launch();
-    //         break;
-    //       default:
-    //     }
-    //   });
-    // }
-
-    // Debugging log
+    /// you can see this log in logcat
     debugPrint('FLUTTER BACKGROUND SERVICE: ${DateTime.now()}');
 
-    // Invoke method for updating the service with data
-    final device = Platform.isAndroid ? 'Android' : 'IOS';
-    AppConstant.service.invoke(
+    // test using external plugin
+    final deviceInfo = DeviceInfoPlugin();
+    String? device;
+    if (Platform.isAndroid) {
+      final androidInfo = await deviceInfo.androidInfo;
+      device = androidInfo.model;
+    }
+
+    if (Platform.isIOS) {
+      final iosInfo = await deviceInfo.iosInfo;
+      device = iosInfo.model;
+    }
+
+    service.invoke(
       'update',
       {
         "current_date": DateTime.now().toIso8601String(),
         "device": device,
       },
     );
-  }
+  });
 }
