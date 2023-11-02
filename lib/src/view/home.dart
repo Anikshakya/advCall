@@ -125,30 +125,32 @@ class _HomePageState extends State<HomePage> {
 
   //Send Data to Node Server from flutter socket client
   void _sendHttpRequestToServer(deviceStatus) async {
-    String serverUrl = serverUrlCon.text.trim();
-    // Create a JSON object with the message and device name
-    final jsonData = {
-      "deviceStatus": deviceStatus,
-      "deviceName"  : deviceName,
-      "imeiNo"      : imeiNo,
-      "modelName"   : modelName,
-      "manufacturer": manufacturer,
-      "Datetime"    : DateTime.now(),
-    };
-    if (kDebugMode) {
-      print(deviceStatus);
-    }
-    final url = Uri.parse('$serverUrl/api/v1/forecast?count=$jsonData');
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
+    if(isSocketServerConnected){
+      String serverUrl = serverUrlCon.text.trim();
+      // Create a JSON object with the message and device name
+      final jsonData = {
+        "deviceStatus": deviceStatus,
+        "deviceName"  : deviceName,
+        "imeiNo"      : imeiNo,
+        "modelName"   : modelName,
+        "manufacturer": manufacturer,
+        "Datetime"    : DateTime.now(),
+      };
       if (kDebugMode) {
-        print('HTTP Request Success');
-        print('Response data: ${response.body}');
+        print(deviceStatus);
       }
-      // Handle the response as needed
-    } else {
-      if (kDebugMode) {
-        print('HTTP Request Failed');
+      final url = Uri.parse('$serverUrl/api/v1/forecast?count=$jsonData');
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        if (kDebugMode) {
+          print('HTTP Request Success');
+          print('Response data: ${response.body}');
+        }
+        // Handle the response as needed
+      } else {
+        if (kDebugMode) {
+          print('HTTP Request Failed');
+        }
       }
     }
   }
