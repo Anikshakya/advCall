@@ -256,7 +256,7 @@ class _WifiScreenState extends State<WifiScreen> {
                         homeCon.wifiname.value = ssid;
                         setState(() async {
                           connecting=false;
-                          // Navigator.pop(context);
+                          Navigator.pop(context);
                           homeCon.connectToSocketServer(context, isWifi: true);
                           fetchAll();
                         });
