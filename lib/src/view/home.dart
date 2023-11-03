@@ -23,7 +23,7 @@ class _HomePageState extends State<HomePage> {
   final headsetPlugin = HeadsetEvent();
   final numberCon = TextEditingController();
   late String savedNum;
-  String text = "Stop Service";
+  String text = "Start Service";
   HeadsetState? _headsetState;
   bool popStatus = false;
   dynamic phoneNumber;

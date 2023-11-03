@@ -21,9 +21,9 @@ Future<void> initializeService() async {
       onStart: onStart, 
       isForegroundMode: true,
       autoStart: false,
-      notificationChannelId: "Advanced Call",
-      initialNotificationTitle: "Initializing Service",
-      initialNotificationContent: "The Service is starting..."
+      // notificationChannelId: "Advanced Call",
+      // initialNotificationTitle: "Initializing Service",
+      // initialNotificationContent: "The Service is starting..."
     )
   );
 }
@@ -44,7 +44,7 @@ void onStart(ServiceInstance service){
   Timer.periodic(const Duration(seconds: 2), (timer) async {
     if (service is AndroidServiceInstance) {
       if (await service.isForegroundService()) {
-        service.setForegroundNotificationInfo(title: "Advance Call", content: "Service Running");
+        // service.setForegroundNotificationInfo(title: "Advance Call", content: "Service Running");
 
         // Handle headset events
         final headsetPlugin = HeadsetEvent();
