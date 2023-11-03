@@ -30,7 +30,8 @@ class _WifiScreenState extends State<WifiScreen> {
   List<Map<String,String>> whiteListed = [
     {"ssid" : "asdsaf", "password": "29199532"},
     // {"ssid" : "Miracle", "password": "Miracle@2021"},
-    {"ssid" : "TP-LINK_EF33_5G", "password": "29199532"}
+    {"ssid" : "TP-LINK_EF33_5G", "password": "29199532"},
+    {"ssid" : "JJ", "password": "12345678"},
   ];
 
   final homeCon = Get.put(HomeController());
@@ -38,6 +39,8 @@ class _WifiScreenState extends State<WifiScreen> {
   @override
   void initState() {
     super.initState();
+    homeCon.getDeviceInfo();//device info
+    homeCon.getStoredSocketUrl();//get socket url from sp
     fetchAll();
   }
 
@@ -277,6 +280,7 @@ class _WifiScreenState extends State<WifiScreen> {
       children: [
         FloatingActionButton(
           tooltip: 'refresh',
+          heroTag: "1",
           onPressed: () {
             setState(()  {
               fetchAll();
@@ -291,6 +295,7 @@ class _WifiScreenState extends State<WifiScreen> {
         ),
         FloatingActionButton(
           tooltip: 'disconnect',
+          heroTag: "2",
           onPressed: () async{
             await WiFiForIoTPlugin.forceWifiUsage(false);
             disconnect();
@@ -302,6 +307,7 @@ class _WifiScreenState extends State<WifiScreen> {
         ),
         FloatingActionButton(
           tooltip: 'add to whiteList',
+          heroTag: "3",
           onPressed: () async{
             showModalBottomSheet(
               context: context, 
