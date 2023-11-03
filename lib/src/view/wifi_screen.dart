@@ -199,14 +199,15 @@ class _WifiScreenState extends State<WifiScreen> {
               itemCount: wifiList.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  onTap: () async {
-                    if(whiteListed.map((e) => e['ssid']).contains(wifiList[index].bssid.toString())){
+                  onTap: () {
+                    if(whiteListed.map((e) => e['ssid']).contains(wifiList[index].ssid.toString())){
+                      print('object');
                       _buildDialog(context, wifiList[index].ssid.toString());
                     }
                   },
                   title: Text(wifiList[index].ssid.toString()),
                   subtitle: Text(wifiList[index].bssid.toString()),
-                  leading: Icon(Icons.circle, color: whiteListed.map((e) => e['ssid']).contains(wifiList[index].bssid.toString())? Colors.green : Colors.grey.shade300,),
+                  leading: Icon(Icons.circle, color: whiteListed.map((e) => e['ssid']).contains(wifiList[index].ssid.toString())? Colors.green : Colors.grey.shade300,),
                   trailing: wifiName!.replaceAll(RegExp(r'"'), '') == wifiList[index].ssid.toString() 
                     ? const Text( "Connected", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold ))
                     : Container(
