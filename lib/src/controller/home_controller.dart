@@ -157,7 +157,8 @@ class HomeController extends GetxController{
 
   void sendWifiLogToServer(wifi) async {
     if(isSocketServerConnected.value){
-      String serverUrl = serverUrlCon.text.trim();
+      String serverUrl = await getStoredSocketUrl(); 
+      // serverUrlCon.text.trim();
       // Create a JSON object with the message and device name
       final jsonData = {
         "Wifi Connected To" : wifi,
