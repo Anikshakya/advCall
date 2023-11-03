@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:developer';
+import 'package:adv_call/src/app_config/styles.dart';
 import 'package:adv_call/src/controller/home_controller.dart';
 import 'package:adv_call/src/view/home.dart';
 import 'package:flutter/material.dart';
@@ -76,6 +77,11 @@ class _WifiScreenState extends State<WifiScreen> {
           _buildDialog(context, data['ssid'].toString());
         });
       }
+    }
+
+    if(whiteListed.map((e) => e['ssid']).contains(wifiName)){
+      Get.to(() => const HomePage());
+      // Navigator.push(context, MaterialPageRoute(builder: (context) => const HomePage(),));
     }
   }
 
