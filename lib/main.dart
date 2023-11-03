@@ -9,7 +9,7 @@ import 'src/utils/shared_pref.dart';
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await SharedPref.init();
-  // await BackgroundService.initializeService();
+  // await initializeService();
   await PermissionManager.initializePermission();
   runApp(const MyApp());
 }

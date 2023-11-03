@@ -1,9 +1,9 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:developer';
-import 'package:adv_call/src/app_config/styles.dart';
 import 'package:adv_call/src/controller/home_controller.dart';
 import 'package:adv_call/src/view/home.dart';
+import 'package:adv_call/src/widgets/snackbar_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -89,10 +89,15 @@ class _WifiScreenState extends State<WifiScreen> {
 
   getWifiInfo() async {
     var status = await Permission.location.request();
-    if (status.isDenied) {
+    final wifistatus = await WiFiForIoTPlugin.isEnabled();
+    if (wifistatus) {
+
+    } else {
+      if(context.mounted){
+        showSnackbar(context, "Please Turn on wifi");
+      }
     }
-    if (await Permission.location.isRestricted) {
-    }
+
     if(status.isGranted){
         wifiName = await WiFiForIoTPlugin.getSSID();
         wifiIp =  await WiFiForIoTPlugin.getIP();
@@ -195,10 +200,13 @@ class _WifiScreenState extends State<WifiScreen> {
               itemBuilder: (context, index) {
                 return ListTile(
                   onTap: () async {
-                    _buildDialog(context, wifiList[index].ssid.toString());
+                    if(whiteListed.map((e) => e['ssid']).contains(wifiList[index].bssid.toString())){
+                      _buildDialog(context, wifiList[index].ssid.toString());
+                    }
                   },
                   title: Text(wifiList[index].ssid.toString()),
                   subtitle: Text(wifiList[index].bssid.toString()),
+                  leading: Icon(Icons.circle, color: whiteListed.map((e) => e['ssid']).contains(wifiList[index].bssid.toString())? Colors.green : Colors.grey.shade300,),
                   trailing: wifiName!.replaceAll(RegExp(r'"'), '') == wifiList[index].ssid.toString() 
                     ? const Text( "Connected", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold ))
                     : Container(

@@ -50,8 +50,8 @@ class HomeController extends GetxController{
   //Connect To Socket Server
   connectToSocketServer(context, {bool isWifi = false}) async {
    
-    const serverUrl = "http://192.168.1.106:3001";  
-    // getStoredSocketUrl();
+    final serverUrl = await getStoredSocketUrl();
+    // "http://192.168.1.106:3001";  
     storeSocketUrl(serverUrl);
     // Connect to the Socket.io server
     socket = io(serverUrl, <String, dynamic>{
