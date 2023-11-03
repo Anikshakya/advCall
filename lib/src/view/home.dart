@@ -193,21 +193,21 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(height: 20),
                     //Stop App
-                    ElevatedButton(
-                      child: Text(text),
-                      onPressed: () async {
-                        final service = FlutterBackgroundService();
-                        var isRunning = await service.isRunning();
-                        if (isRunning) {
-                          service.invoke("stopService");
-                          text = 'Start Service';
-                        } else {
-                          service.startService();
-                          text = 'Stop Service';
-                        }
-                        setState(() {});
-                      },
-                    ),
+                    // ElevatedButton(
+                    //   child: Text(text),
+                    //   onPressed: () async {
+                    //     final service = FlutterBackgroundService();
+                    //     var isRunning = await service.isRunning();
+                    //     if (isRunning) {
+                    //       service.invoke("stopService");
+                    //       text = 'Start Service';
+                    //     } else {
+                    //       service.startService();
+                    //       text = 'Stop Service';
+                    //     }
+                    //     setState(() {});
+                    //   },
+                    // ),
                     const SizedBox(height: 20),
                     //Change Number
                     ElevatedButton(

@@ -159,9 +159,12 @@ class _WifiScreenState extends State<WifiScreen> {
         children: [
 
           //conected 
-          Padding(
-            padding: const EdgeInsets.only(top: 15, left: 15),
-            child: Text("Connected To :", style: const TextTheme().bodyMedium,),
+          GestureDetector(
+            onTap: () => Get.to(()=> const HomePage()),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 15, left: 15),
+              child: Text("Connected To :", style: const TextTheme().bodyMedium,),
+            ),
           ),
           Card(
             elevation: 5,

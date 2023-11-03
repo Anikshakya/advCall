@@ -20,7 +20,7 @@ Future<void> initializeService() async {
     androidConfiguration: AndroidConfiguration(
       onStart: onStart, 
       isForegroundMode: true,
-      autoStart: false,
+      autoStart: true,
       // notificationChannelId: "Advanced Call",
       // initialNotificationTitle: "Initializing Service",
       // initialNotificationContent: "The Service is starting..."
