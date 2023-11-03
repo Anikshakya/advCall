@@ -80,6 +80,7 @@ class _WifiScreenState extends State<WifiScreen> {
     }
 
     if(whiteListed.map((e) => e['ssid']).contains(wifiName)){
+      homeCon.wifiname.value = wifiName.toString();
       Get.to(() => const HomePage());
       // Navigator.push(context, MaterialPageRoute(builder: (context) => const HomePage(),));
     }

@@ -235,6 +235,14 @@ class _HomePageState extends State<HomePage> {
                         callNumber();
                       },
                     ),
+                    const SizedBox(height: 20),
+                    //Test Call
+                    ElevatedButton(
+                      child: const Text("Wifi"),
+                      onPressed: (){
+                        Get.back();
+                      },
+                    ),
                   ],
                 ),
               ),
