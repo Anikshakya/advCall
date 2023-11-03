@@ -152,7 +152,7 @@ class _HomePageState extends State<HomePage> {
                       OutlinedButton(
                         onPressed:(){
                           if(homeCon.serverUrlCon.text.trim()==""){
-                            showSnackbar(context,'Enter Server URL to connect to.');
+                            showSnackbar('Enter Server URL to connect to.');
                           }
                           else if(homeCon.isSocketServerConnected.value){
                             homeCon.disconnectFromSocketServer(context);

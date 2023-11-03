@@ -30,7 +30,7 @@ class _WifiScreenState extends State<WifiScreen> {
   bool loading = false;
   List<Map<String,String>> whiteListed = [
     {"ssid" : "asdsaf", "password": "29199532"},
-    // {"ssid" : "Miracle", "password": "Miracle@2021"},
+    {"ssid" : "Miracle Dev", "password": "Miracle@Dev"},
     {"ssid" : "TP-LINK_EF33_5G", "password": "29199532"},
     {"ssid" : "JJ", "password": "12345678"},
   ];
@@ -94,7 +94,7 @@ class _WifiScreenState extends State<WifiScreen> {
 
     } else {
       if(context.mounted){
-        showSnackbar(context, "Please Turn on wifi");
+        showSnackbar( "Please Turn on wifi");
       }
     }
 
@@ -215,7 +215,6 @@ class _WifiScreenState extends State<WifiScreen> {
                 );
               }, 
             )
-    
         ],
       ),
     );
@@ -262,7 +261,7 @@ class _WifiScreenState extends State<WifiScreen> {
                         log("Connected To : $ssid");
                         log("wifi usage : $wifiusage");
                         homeCon.wifiname.value = ssid;
-                        setState(() async {
+                        setState(() {
                           connecting=false;
                           Navigator.pop(context);
                           homeCon.connectToSocketServer(context, isWifi: true);

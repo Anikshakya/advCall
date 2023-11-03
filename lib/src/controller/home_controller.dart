@@ -49,9 +49,7 @@ class HomeController extends GetxController{
 
   //Connect To Socket Server
   connectToSocketServer(context, {bool isWifi = false}) async {
-   
     final serverUrl = await getStoredSocketUrl();
-    // "http://192.168.1.106:3001";  
     storeSocketUrl(serverUrl);
     // Connect to the Socket.io server
     socket = io(serverUrl, <String, dynamic>{
@@ -64,7 +62,7 @@ class HomeController extends GetxController{
       }
       // You can emit events here or handle other actions upon connection.
       isSocketServerConnected.value = true;
-      showSnackbar(context,'Connected to server');
+      showSnackbar('Connected to server');
       if (isWifi) {
         sendWifiLogToServer(wifiname.value);
         Navigator.push(context, MaterialPageRoute(builder: (context) => const HomePage(),));
@@ -76,7 +74,7 @@ class HomeController extends GetxController{
       }
       // Handle the connection error here.
       isSocketServerConnected.value = false;
-      showSnackbar(context, 'Connection error: $data');
+      showSnackbar('Connection error: $data');
       socket.close();
     });
     // Handle incoming data
@@ -98,7 +96,7 @@ class HomeController extends GetxController{
       }
       isSocketServerConnected.value = false;
       receivedDataFromServer.value = '';
-      showSnackbar(context,'Disconnected from server');
+      showSnackbar('Disconnected from server');
     });
     socket.close();
   }
