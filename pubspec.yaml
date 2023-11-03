@@ -43,8 +43,9 @@ dependencies:
   fluttertoast: ^8.2.2
   get: ^4.6.6
 
-  flutter_background_service: ^2.4.6
-  flutter_background_service_android: ^3.0.2
+  flutter_background_service: ^5.0.2
+  flutter_background_service_android: ^6.1.0
+  flutter_background_service_ios: ^5.0.0
 
   device_information: ^0.0.4
   socket_io_client: ^2.0.3+1

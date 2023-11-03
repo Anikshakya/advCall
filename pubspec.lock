@@ -122,34 +122,34 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_background_service
-      sha256: "7b9f15ab7d1a5784850ecfde722be4ace4dbcf1072a1fe33b7f9cbe871241e53"
+      sha256: "7b18ac89f88e521a44e9da8fcaa768a59b7c2cfad9f41bf3fcc6cf673032e33e"
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.6"
+    version: "5.0.2"
   flutter_background_service_android:
     dependency: "direct main"
     description:
       name: flutter_background_service_android
-      sha256: "57fd631d800f7e56ca5bfadcfc00c8903eb721b23506b1a387342039521883ec"
+      sha256: "4998b3d191a04f36f720eff69d3905f384b91e1f92b3dd74aca4ffb5670f38dc"
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.3"
+    version: "6.1.0"
   flutter_background_service_ios:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: flutter_background_service_ios
-      sha256: d3f1dc009137c1ac19f5e3d88668836f088a7e078396733547339765d46ff12f
+      sha256: ab73657535876e16abc89e40f924df3e92ad3dee83f64d187081417e824709ed
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.0"
+    version: "5.0.0"
   flutter_background_service_platform_interface:
     dependency: transitive
     description:
       name: flutter_background_service_platform_interface
-      sha256: "5f0480ee8378984f718d640abbe09b4d6d024d58a72b2d8b86bdedb3cf095ff8"
+      sha256: cd5720ff5b051d551a4734fae16683aace779bd0425e8d3f15d84a0cdcc2d8d9
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.0"
+    version: "5.0.0"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -192,6 +192,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  fluttertoast:
+    dependency: "direct main"
+    description:
+      name: fluttertoast
+      sha256: "474f7d506230897a3cd28c965ec21c5328ae5605fc9c400cd330e9e9d6ac175c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "8.2.2"
   get:
     dependency: "direct main"
     description:

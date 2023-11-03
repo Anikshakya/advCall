@@ -23,6 +23,7 @@ class _HomePageState extends State<HomePage> {
   final headsetPlugin = HeadsetEvent();
   final numberCon = TextEditingController();
   late String savedNum;
+  bool isServiceRunning = false;
   String text = "Start Service";
   HeadsetState? _headsetState;
   bool popStatus = false;
@@ -39,6 +40,7 @@ class _HomePageState extends State<HomePage> {
   initialize() async{
     checkForStoredNumber();
     checkHeadsetConnectionStatus();
+    checkIfServiceIsRunning();
   }
 
   // Check for Headphone Status
@@ -71,6 +73,12 @@ class _HomePageState extends State<HomePage> {
     } else{
       popStatus = true;
     }
+    setState(() {});
+  }
+
+  // Check if the background service is running
+  checkIfServiceIsRunning() async {
+    isServiceRunning = await FlutterBackgroundService().isRunning();
     setState(() {});
   }
 
@@ -184,37 +192,18 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    //ForeGround Mode
-                    ElevatedButton(
-                      child: const Text("Foreground Mode"),
-                      onPressed: () {
-                        FlutterBackgroundService().invoke("setAsForeground");
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    //Background Mode
-                    ElevatedButton(
-                      child: const Text("Background Mode"),
-                      onPressed: () {
-                        FlutterBackgroundService().invoke("setAsBackground");
-                      },
-                    ),
-                    const SizedBox(height: 20),
                     //Stop App
                     ElevatedButton(
                       child: Text(text),
                       onPressed: () async {
-                        var isRunning = await AppConstant.service.isRunning();
+                        final service = FlutterBackgroundService();
+                        var isRunning = await service.isRunning();
                         if (isRunning) {
-                          AppConstant.service.invoke("stopService");
-                        } else {
-                          AppConstant.service.startService();
-                        }
-              
-                        if (!isRunning) {
-                          text = 'Stop Service';
-                        } else {
+                          service.invoke("stopService");
                           text = 'Start Service';
+                        } else {
+                          service.startService();
+                          text = 'Stop Service';
                         }
                         setState(() {});
                       },
@@ -432,17 +421,14 @@ class _HomePageState extends State<HomePage> {
                                 actions: [
                                   TextButton(
                                     onPressed: () async{
-                                      var isRunning = await AppConstant.service.isRunning();
+                                      final service = FlutterBackgroundService();
+                                      var isRunning = await service.isRunning();
                                       if (isRunning) {
-                                        AppConstant.service.invoke("stopService");
-                                      } else {
-                                        AppConstant.service.startService();
-                                      }
-                          
-                                      if (!isRunning) {
-                                        text = 'Stop Service';
-                                      } else {
+                                        service.invoke("stopService");
                                         text = 'Start Service';
+                                      } else {
+                                        service.startService();
+                                        text = 'Stop Service';
                                       }
                                       //Save Number and pop
                                       if(phoneNumber != "" && phoneNumber!=null){

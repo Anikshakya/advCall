@@ -41,10 +41,13 @@ void onStart(ServiceInstance service){
       service.stopSelf();
     });
   }
-  Timer.periodic(const Duration(seconds: 2), (timer) async {
+  Timer.periodic(const Duration(seconds: 1), (timer) async {
+    service.on('stopService').listen((event) {
+      service.stopSelf();
+    });
     if (service is AndroidServiceInstance) {
       if (await service.isForegroundService()) {
-        // service.setForegroundNotificationInfo(title: "Advance Call", content: "Service Running");
+        service.setForegroundNotificationInfo(title: "Advance Call", content: "Service Running");
 
         // Handle headset events
         final headsetPlugin = HeadsetEvent();
