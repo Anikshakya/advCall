@@ -56,6 +56,7 @@ class HomeController extends GetxController{
       'transports': ['websocket'],
       'autoConnect': false,
     });
+    socket.off('connect');
     socket.on('connect', (_) {
       if (kDebugMode) {
         print('Connected to the server');
@@ -90,6 +91,7 @@ class HomeController extends GetxController{
 
   //Disconnect From Socket Server
   disconnectFromSocketServer(context){
+    socket.off('disconnect');
     socket.on('disconnect',(_){
       if (kDebugMode) {
         print('Disconnected from the server');
