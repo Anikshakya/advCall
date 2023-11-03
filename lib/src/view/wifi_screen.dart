@@ -201,7 +201,6 @@ class _WifiScreenState extends State<WifiScreen> {
                 return ListTile(
                   onTap: () {
                     if(whiteListed.map((e) => e['ssid']).contains(wifiList[index].ssid.toString())){
-                      print('object');
                       _buildDialog(context, wifiList[index].ssid.toString());
                     }
                   },
