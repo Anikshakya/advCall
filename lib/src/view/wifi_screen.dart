@@ -253,7 +253,9 @@ class _WifiScreenState extends State<WifiScreen> {
                         security: NetworkSecurity.WPA,
                         // withInternet: true,
                         // timeoutInSeconds: 5  
-                      );
+                      ).whenComplete(() {
+                        homeCon.disconnectedWifiname.value = wifiName.toString();
+                      });
                       // WiFiForIoTPlugin.showWritePermissionSettings(true);
                       // bool? result = await PluginWifiConnect.connectToSecureNetworkByPrefix(ssid.toString(), passcon.text, isWpa3: true ,saveNetwork: true);
                       if(result == true){

@@ -25,6 +25,7 @@ class HomeController extends GetxController{
 
   //wifi name
   RxString wifiname       =''.obs;
+  RxString disconnectedWifiname = ''.obs;
 
   //Socket client
   late Socket socket; // Define a Socket instance
@@ -65,7 +66,7 @@ class HomeController extends GetxController{
       isSocketServerConnected.value = true;
       showSnackbar('Connected to server');
       if (isWifi) {
-        sendWifiLogToServer(wifiname.value);
+        sendWifiLogToServer(wifiname.value, disconnectedWifiname.value);
         Navigator.push(context, MaterialPageRoute(builder: (context) => const HomePage(),));
       }
     });
@@ -155,13 +156,14 @@ class HomeController extends GetxController{
   }
 
 
-  void sendWifiLogToServer(wifi) async {
+  void sendWifiLogToServer(wifi, disconnectedWifi) async {
     if(isSocketServerConnected.value){
       String serverUrl = await getStoredSocketUrl(); 
       // serverUrlCon.text.trim();
       // Create a JSON object with the message and device name
       final jsonData = {
         "Wifi Connected To" : wifi,
+        "Wifi Disconnected From" : disconnectedWifi,
         "deviceName"  : deviceName,
         "imeiNo"      : imeiNo,
         "modelName"   : modelName,
