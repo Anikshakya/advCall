@@ -1,10 +1,11 @@
 import 'dart:async';
+import 'package:adv_call/src/view/sim_info.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:get/get.dart';
 import 'package:headset_connection_event/headset_event.dart';
+import 'package:sim_data/sim_data.dart';
 import '../constant/constants.dart';
 import '../controller/home_controller.dart';
 import '../utils/shared_pref.dart';
@@ -34,13 +35,30 @@ class _HomePageState extends State<HomePage> {
     homeCon.getDeviceInfo();//device info
     homeCon.getStoredSocketUrl();//get socket url from sp
     initialize(); // Initilize headset settings
+    // homeCon.
+    printSimCardsData();
     super.initState(); 
   }
+
+void printSimCardsData() async {
+  try {
+    SimData simData = await SimDataPlugin.getSimData();
+      print('jjj sim: ${simData.toString()}');
+    for (var s in simData.
+    cards) {
+      print('Serial number: ${s.serialNumber}');
+    }
+  } on PlatformException catch (e) {
+    debugPrint("error! code: ${e.code} - message: ${e.message}");
+  }
+}
+
+  String mobileNumber = '';
 
   initialize() async{
     checkForStoredNumber();
     checkHeadsetConnectionStatus();
-    checkIfServiceIsRunning();
+    // checkIfServiceIsRunning();
   }
 
   // Check for Headphone Status
@@ -77,10 +95,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Check if the background service is running
-  checkIfServiceIsRunning() async {
-    isServiceRunning = await FlutterBackgroundService().isRunning();
-    setState(() {});
-  }
+  // checkIfServiceIsRunning() async {
+  //   isServiceRunning = await FlutterBackgroundService().isRunning();
+  //   setState(() {});
+  // }
 
   @override
   void dispose() {
@@ -168,7 +186,7 @@ class _HomePageState extends State<HomePage> {
                           else{
                             homeCon.connectToSocketServer(context);
                           }
-                        }, 
+                        },
                         style: ButtonStyle(
                           padding: MaterialStateProperty.all(const EdgeInsets.all(16.0)), // Adjust padding for height
                           backgroundColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
@@ -230,6 +248,14 @@ class _HomePageState extends State<HomePage> {
                       child: const Text("Wifi"),
                       onPressed: (){
                         Get.back();
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    //Sim Info
+                    ElevatedButton(
+                      child: const Text("Sim Info"),
+                      onPressed: (){
+                        Get.to(() => const SimInfoScreen() );
                       },
                     ),
                   ],
@@ -421,15 +447,15 @@ class _HomePageState extends State<HomePage> {
                                 actions: [
                                   TextButton(
                                     onPressed: () async{
-                                      final service = FlutterBackgroundService();
-                                      var isRunning = await service.isRunning();
-                                      if (isRunning) {
-                                        service.invoke("stopService");
-                                        text = 'Start Service';
-                                      } else {
-                                        service.startService();
-                                        text = 'Stop Service';
-                                      }
+                                      // final service = FlutterBackgroundService();
+                                      // var isRunning = await service.isRunning();
+                                      // if (isRunning) {
+                                      //   service.invoke("stopService");
+                                      //   text = 'Start Service';
+                                      // } else {
+                                      //   service.startService();
+                                      //   text = 'Stop Service';
+                                      // }
                                       //Save Number and pop
                                       if(phoneNumber != "" && phoneNumber!=null){
                                         setState(() {

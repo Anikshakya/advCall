@@ -52,6 +52,15 @@ dependencies:
   http: ^1.1.0
   wifi_iot: any
   android_flutter_wifi: any
+  wifi_scan: 0.4.0+2
+  unique_identifier: ^0.3.0
+  device_info_plus: ^9.1.0  
+  device_imei: ^0.0.4+1
+  simnumber: ^0.0.12
+  mobile_number: ^2.1.1
+  sim_data: ^0.0.2
+
+
 
 dev_dependencies:
   flutter_test:

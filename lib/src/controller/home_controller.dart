@@ -1,11 +1,16 @@
 import 'package:adv_call/src/widgets/snackbar_widget.dart';
+import 'package:device_imei/device_imei.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:device_information/device_information.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:simnumber/sim_number.dart';
+import 'package:simnumber/siminfo.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 import 'package:http/http.dart' as http;
+import 'package:unique_identifier/unique_identifier.dart';
 import '../constant/constants.dart';
 import '../utils/shared_pref.dart';
 import '../view/home.dart';
@@ -42,11 +47,26 @@ class HomeController extends GetxController{
       manufacturer.value    = await DeviceInformation.deviceManufacturer;
       productName.value     = await DeviceInformation.productName;
       cpuType.value         = await DeviceInformation.cpuName;
+      String?  identifier = await UniqueIdentifier.serial;
+    final DeviceInfoPlugin deviceInfoPlugin = DeviceInfoPlugin();
+      var data = await deviceInfoPlugin.deviceInfo;
+      String? imei = await DeviceImei().getDeviceImei();
       hardware.value        = await DeviceInformation.hardware;
     } on PlatformException {
       platformVersion.value = 'Failed to get platform version.';
     }
   }
+
+  void printSimCardsData() async {
+  try {
+    SimInfo simInfo = await SimNumber.getSimData();
+    for (var s in simInfo.cards) {
+      print('-------------------Serial number: ${s.slotIndex} ${s.phoneNumber}');
+    }
+  } on Exception catch (e) {
+    debugPrint("error! code: ${e.toString()} - message: ${e.toString()}");
+  }
+}
 
   //Connect To Socket Server
   connectToSocketServer(context, {bool isWifi = false}) async {

@@ -10,6 +10,7 @@ import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 import 'package:android_flutter_wifi/android_flutter_wifi.dart' as afw;
+import 'package:wifi_scan/wifi_scan.dart';
 
 class WifiScreen extends StatefulWidget {
   const WifiScreen({super.key});
@@ -42,6 +43,7 @@ class _WifiScreenState extends State<WifiScreen> {
     super.initState();
     homeCon.getDeviceInfo();//device info
     homeCon.getStoredSocketUrl();//get socket url from sp
+    homeCon.printSimCardsData();
     fetchAll();
   }
 
@@ -139,6 +141,18 @@ class _WifiScreenState extends State<WifiScreen> {
       loading = false;
     });
     return htResultNetwork;
+  }
+
+  void _getScannedResults() async {
+    // check platform support and necessary requirements
+    final can = await WiFiScan.instance.canGetScannedResults(askPermissions: true);
+    switch (can) {
+      case CanGetScannedResults.yes:
+        final accessPoints = await WiFiScan.instance.getScannedResults();
+        log(accessPoints.map((e) => e.ssid).toString());
+        break;
+      default:
+    }
   }
 
   @override
@@ -316,8 +330,9 @@ class _WifiScreenState extends State<WifiScreen> {
           tooltip: 'disconnect',
           heroTag: "2",
           onPressed: () async{
-            await WiFiForIoTPlugin.forceWifiUsage(false);
-            disconnect();
+            _getScannedResults();
+            // await WiFiForIoTPlugin.forceWifiUsage(false);
+            // disconnect();
           },
           child: const Icon(Icons.close)
         ),
